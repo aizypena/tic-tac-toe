@@ -1,53 +1,54 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useState, useEffect } from "react"; // Import necessary modules from React
+import "./App.css"; // Import the styling of the app
 
 function App() {
-    // State variables for game state and player turn
-    const [gameState, setGameState] = useState(Array(9).fill(null));
-    const [xIsNext, setXIsNext] = useState(true);
+    // State variables for the game state and the next player
+    const [gameState, setGameState] = useState(Array(9).fill(null)); // State for the game board
+    const [xIsNext, setXIsNext] = useState(true); // State for tracking the current player's turn
+    const winner = calculateWinner(gameState); // Determine if there's a winner
 
-    // Initialize the game state when the component mounts
     useEffect(() => {
+        // Reset the game board when the component mounts
         resetGame();
     }, []);
 
-    // Handle player move on a square
+    // Function to handle a move when a square is clicked
     const handleMove = async (index) => {
-        if (!gameState[index]) {
-            // Send a request to the server to make a move
+        if (!gameState[index] && !winner) {
+            // Check if the square is available and there's no winner yet
             const response = await fetch("http://localhost:3001/move", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ index, isX: xIsNext }),
+                body: JSON.stringify({ index, isX: xIsNext }), // Send the index and current player's turn
             });
             const data = await response.json();
             if (data.success) {
-                // Update the game state and player turn
-                setGameState(data.gameState);
-                setXIsNext(!xIsNext);
+                setGameState(data.gameState); // Update the game state with the new move
+                setXIsNext(!xIsNext); // Toggle the player's turn
             }
         }
     };
 
-    // Reset the game state
+    // Function to reset the game
     const resetGame = async () => {
-        // Send a request to the server to reset the game
         const response = await fetch("http://localhost:3001/reset");
         const data = await response.json();
-        // Update the game state and set the first player as "X"
-        setGameState(data.gameState);
-        setXIsNext(true);
+        setGameState(data.gameState); // Reset the game state to the initial state
+        setXIsNext(true); // Set the player's turn back to X
     };
 
-    // Render a square button
+    // Function to render each square
     const renderSquare = (index) => (
-        <button className="square" onClick={() => handleMove(index)}>
+        <button
+            className="square"
+            onClick={() => handleMove(index)}
+            disabled={gameState[index] || winner} // Disable the square if it's occupied or there's a winner
+        >
             {gameState[index]}
         </button>
     );
 
-    // Calculate the winner based on the game state
-    const winner = calculateWinner(gameState);
+    // Determine the game status
     let status;
     if (winner) {
         status = "Winner: " + winner;
@@ -57,11 +58,10 @@ function App() {
         status = "Next player: " + (xIsNext ? "X" : "O");
     }
 
+    // Render the game board and UI
     return (
         <div className="game">
-            {/* Display the current game status */}
             <div className="status">{status}</div>
-            {/* Render the game board */}
             <div className="board-row">
                 {renderSquare(0)}
                 {renderSquare(1)}
@@ -77,7 +77,6 @@ function App() {
                 {renderSquare(7)}
                 {renderSquare(8)}
             </div>
-            {/* Reset Game button */}
             <button className="reset-button" onClick={resetGame}>
                 Reset Game
             </button>
@@ -85,7 +84,7 @@ function App() {
     );
 }
 
-// Function to calculate the winner based on the squares
+// Function to calculate the winner based on the current game state
 function calculateWinner(squares) {
     const lines = [
         [0, 1, 2],
@@ -107,7 +106,7 @@ function calculateWinner(squares) {
             return squares[a];
         }
     }
-    return null;
+    return null; // Return null if no winner
 }
 
-export default App;
+export default App; // Export the App component
